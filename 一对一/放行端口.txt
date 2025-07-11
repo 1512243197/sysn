@@ -1,0 +1,6 @@
+netsh advfirewall firewall add rule name="SyncToolAllow5000" dir=in action=allow protocol=TCP localport=5000
+netsh advfirewall firewall add rule name="SyncToolAllow5001" dir=in action=allow protocol=TCP localport=5001
+
+
+pyinstaller --onefile --console sync_node_full.py
+

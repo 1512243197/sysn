@@ -1,0 +1,8 @@
+{
+  "name": "A",
+  "my_port": 4001,
+  "peer_ip": "10.223.244.26",
+  "peer_port": 4000,
+  "shared_folder": "E:/Temp/sync_test_v1/shared_a",
+  "pull_interval": 2
+}
