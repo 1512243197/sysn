@@ -24,7 +24,7 @@ app = Flask(__name__)
 
 pull_pause_flags = {}
 
-# === ¹¤¾ßº¯Êı ===
+# === å·¥å…·å‡½æ•° ===
 
 def file_md5(path: str, chunk_size: int = 8192) -> str:
     hash_md5 = hashlib.md5()
@@ -33,7 +33,7 @@ def file_md5(path: str, chunk_size: int = 8192) -> str:
             for chunk in iter(lambda: f.read(chunk_size), b""):
                 hash_md5.update(chunk)
     except Exception as e:
-        logger.error(f"¼ÆËãMD5Ê§°Ü: {path}£¬Òì³£: {e}")
+        logger.error(f"è®¡ç®—MD5å¤±è´¥: {path}ï¼Œå¼‚å¸¸: {e}")
         return None
     return hash_md5.hexdigest()
 
@@ -41,15 +41,15 @@ def safe_path(base: str, path: str) -> str:
     combined = os.path.normpath(os.path.join(base, path))
     base = os.path.abspath(base)
     if not combined.startswith(base):
-        raise Exception(f"·Ç·¨Â·¾¶·ÃÎÊ: {path}")
+        raise Exception(f"éæ³•è·¯å¾„è®¿é—®: {path}")
     return combined
 
 def notify_pause_pull(peer_url: str, pause: bool):
     try:
         requests.post(f"{peer_url}/pause_pull", json={"pause": pause}, timeout=5)
-        logger.info(f"Í¨Öª {peer_url} {'ÔİÍ£' if pause else '»Ö¸´'} À­È¡")
+        logger.info(f"é€šçŸ¥ {peer_url} {'æš‚åœ' if pause else 'æ¢å¤'} æ‹‰å–")
     except Exception:
-        logger.warning(f"Í¨Öª {peer_url} ÉèÖÃÀ­È¡Ê§°Ü")
+        logger.warning(f"é€šçŸ¥ {peer_url} è®¾ç½®æ‹‰å–å¤±è´¥")
 def try_remove_file(path, retries=5, delay=0.5):
     for i in range(retries):
         try:
@@ -59,7 +59,7 @@ def try_remove_file(path, retries=5, delay=0.5):
         except PermissionError:
             time.sleep(delay)
     return False
-# === ÎÄ¼şÏµÍ³¼àÌıÆ÷ ===
+# === æ–‡ä»¶ç³»ç»Ÿç›‘å¬å™¨ ===
 
 class SyncHandler(FileSystemEventHandler):
     def __init__(self, config: dict):
@@ -109,61 +109,61 @@ class SyncHandler(FileSystemEventHandler):
         url = f"http://{self.config['peer_ip']}:{self.config['peer_port']}/upload/{encoded}"
 
         try:
-            # === ĞÂÔö£ºÔİÍ£±¾µØÀ­È¡ ===
+            # === æ–°å¢ï¼šæš‚åœæœ¬åœ°æ‹‰å– ===
             self.config['_pause_pull'] = True
-            logger.info(f"[{self.name}] ÔİÍ£±¾µØÀ­È¡")
+            logger.info(f"[{self.name}] æš‚åœæœ¬åœ°æ‹‰å–")
 
-            # === Í¨Öª¶Ô¶ËÔİÍ£À­È¡ ===
+            # === é€šçŸ¥å¯¹ç«¯æš‚åœæ‹‰å– ===
             peer_pause_url = f"http://{self.config['peer_ip']}:{self.config['peer_port']}/pause_pull"
             requests.post(peer_pause_url, timeout=5)
-            logger.info(f"[{self.name}] Í¨Öª {self.config['peer_ip']} ÔİÍ£ À­È¡")
+            logger.info(f"[{self.name}] é€šçŸ¥ {self.config['peer_ip']} æš‚åœ æ‹‰å–")
 
             size_mb = os.path.getsize(path) / 1024 / 1024
-            logger.info(f"[{self.name}] ÉÏ´«ÎÄ¼ş: {filename} ({size_mb:.2f}MB)")
+            logger.info(f"[{self.name}] ä¸Šä¼ æ–‡ä»¶: {filename} ({size_mb:.2f}MB)")
             with open(path, 'rb') as f:
                 resp = requests.post(url, data=f, headers={'Content-Type': 'application/octet-stream'}, timeout=300)
 
             if resp.status_code == 200:
-                logger.info(f"[{self.name}] ÉÏ´«Íê³É: {filename}")
+                logger.info(f"[{self.name}] ä¸Šä¼ å®Œæˆ: {filename}")
             else:
-                logger.warning(f"[{self.name}] ÉÏ´«Ê§°Ü {filename}£¬×´Ì¬Âë: {resp.status_code}")
+                logger.warning(f"[{self.name}] ä¸Šä¼ å¤±è´¥ {filename}ï¼ŒçŠ¶æ€ç : {resp.status_code}")
 
         except Exception as e:
-            logger.error(f"[{self.name}] ÉÏ´«Òì³£: {filename}£º{e}")
+            logger.error(f"[{self.name}] ä¸Šä¼ å¼‚å¸¸: {filename}ï¼š{e}")
 
         finally:
-            # === »Ö¸´±¾µØÀ­È¡ ===
+            # === æ¢å¤æœ¬åœ°æ‹‰å– ===
             name = app.config['name']
             pull_pause_flags[name].clear()
             pull_pause_flags[self.name].clear()
-            logger.info(f"[{self.name}] »Ö¸´±¾µØÀ­È¡")
+            logger.info(f"[{self.name}] æ¢å¤æœ¬åœ°æ‹‰å–")
 
-            # === Í¨Öª¶Ô¶Ë»Ö¸´À­È¡ ===
+            # === é€šçŸ¥å¯¹ç«¯æ¢å¤æ‹‰å– ===
             try:
                 peer_resume_url = f"http://{self.config['peer_ip']}:{self.config['peer_port']}/resume_pull"
                 requests.post(peer_resume_url, timeout=5)
-                logger.info(f"[{self.name}] Í¨Öª {self.config['peer_ip']} »Ö¸´ À­È¡")
+                logger.info(f"[{self.name}] é€šçŸ¥ {self.config['peer_ip']} æ¢å¤ æ‹‰å–")
             except Exception as e:
-                logger.warning(f"[{self.name}] Í¨Öª¶Ô¶Ë»Ö¸´À­È¡Ê§°Ü: {e}")
+                logger.warning(f"[{self.name}] é€šçŸ¥å¯¹ç«¯æ¢å¤æ‹‰å–å¤±è´¥: {e}")
 
 
     def sync_delete(self, filename: str):
         encoded = urllib.parse.quote(filename)
         try:
             requests.post(f"{self.peer_url}/delete/{encoded}", timeout=10)
-            logger.info(f"[{self.name}] É¾³ıÔ¶³ÌÎÄ¼ş: {filename}")
+            logger.info(f"[{self.name}] åˆ é™¤è¿œç¨‹æ–‡ä»¶: {filename}")
         except Exception as e:
-            logger.error(f"[{self.name}] É¾³ıÔ¶³ÌÊ§°Ü {filename}£º{e}")
+            logger.error(f"[{self.name}] åˆ é™¤è¿œç¨‹å¤±è´¥ {filename}ï¼š{e}")
 
     def sync_mkdir(self, foldername: str):
         encoded = urllib.parse.quote(foldername)
         try:
             requests.post(f"{self.peer_url}/mkdir/{encoded}", timeout=10)
-            logger.info(f"[{self.name}] ´´½¨Ô¶³ÌÎÄ¼ş¼Ğ: {foldername}")
+            logger.info(f"[{self.name}] åˆ›å»ºè¿œç¨‹æ–‡ä»¶å¤¹: {foldername}")
         except Exception as e:
-            logger.error(f"[{self.name}] ´´½¨Ô¶³ÌÎÄ¼ş¼ĞÊ§°Ü {foldername}£º{e}")
+            logger.error(f"[{self.name}] åˆ›å»ºè¿œç¨‹æ–‡ä»¶å¤¹å¤±è´¥ {foldername}ï¼š{e}")
 
-    # === ¼àÌıÊÂ¼ş ===
+    # === ç›‘å¬äº‹ä»¶ ===
 
     def on_created(self, event):
         rel = os.path.relpath(event.src_path, self.config['shared_folder']).replace("\\", "/")
@@ -182,7 +182,7 @@ class SyncHandler(FileSystemEventHandler):
         rel = os.path.relpath(event.src_path, self.config['shared_folder']).replace("\\", "/")
         if rel.endswith(".uploading"):
             return
-        self.recent_synced.pop(rel, None)  # ÇåÀíÉ¾³ıÎÄ¼şµÄÍ¬²½¼ÇÂ¼
+        self.recent_synced.pop(rel, None)  # æ¸…ç†åˆ é™¤æ–‡ä»¶çš„åŒæ­¥è®°å½•
         self.sync_delete(rel)
 
 
@@ -197,7 +197,7 @@ class SyncHandler(FileSystemEventHandler):
         else:
             self.debounce_sync(event.dest_path)
 
-# === Flask ½Ó¿Ú ===
+# === Flask æ¥å£ ===
 
 @app.route('/upload/<path:filename>', methods=['POST'])
 def upload(filename):
@@ -213,11 +213,11 @@ def upload(filename):
                     break
                 f.write(chunk)
         os.replace(temp_path, real_path)
-        logger.info(f"[{app.config['name']}] ÎÄ¼ş½ÓÊÕÍê³É: {filename}")
+        logger.info(f"[{app.config['name']}] æ–‡ä»¶æ¥æ”¶å®Œæˆ: {filename}")
         return 'OK'
     except Exception:
-        logger.error(f"[{app.config['name']}] ÉÏ´«Òì³£:\n{traceback.format_exc()}")
-        return 'ÉÏ´«Ê§°Ü', 400
+        logger.error(f"[{app.config['name']}] ä¸Šä¼ å¼‚å¸¸:\n{traceback.format_exc()}")
+        return 'ä¸Šä¼ å¤±è´¥', 400
     finally:
         pull_pause_flags[app.config['name']].clear()
 
@@ -228,19 +228,19 @@ def delete(filename):
         if os.path.isfile(path):
             success = try_remove_file(path)
             if not success:
-                logger.error(f"[{app.config['name']}] É¾³ıÎÄ¼şÊ§°Ü£¨±»Õ¼ÓÃ£©: {filename}")
-                return 'ÎÄ¼ş±»Õ¼ÓÃ£¬É¾³ıÊ§°Ü', 400
-            logger.info(f"[{app.config['name']}] É¾³ıÎÄ¼ş³É¹¦: {filename}")
+                logger.error(f"[{app.config['name']}] åˆ é™¤æ–‡ä»¶å¤±è´¥ï¼ˆè¢«å ç”¨ï¼‰: {filename}")
+                return 'æ–‡ä»¶è¢«å ç”¨ï¼Œåˆ é™¤å¤±è´¥', 400
+            logger.info(f"[{app.config['name']}] åˆ é™¤æ–‡ä»¶æˆåŠŸ: {filename}")
             return 'OK'
         if os.path.isdir(path):
             shutil.rmtree(path)
-            logger.info(f"[{app.config['name']}] É¾³ıÎÄ¼ş¼Ğ: {filename}")
+            logger.info(f"[{app.config['name']}] åˆ é™¤æ–‡ä»¶å¤¹: {filename}")
             return 'OK'
-        logger.warning(f"[{app.config['name']}] ÎÄ¼ş²»´æÔÚ: {filename}")
-        return 'ÎÄ¼ş²»´æÔÚ', 404
+        logger.warning(f"[{app.config['name']}] æ–‡ä»¶ä¸å­˜åœ¨: {filename}")
+        return 'æ–‡ä»¶ä¸å­˜åœ¨', 404
     except Exception:
-        logger.error(f"[{app.config['name']}] É¾³ıÒì³£:\n{traceback.format_exc()}")
-        return 'É¾³ıÊ§°Ü', 400
+        logger.error(f"[{app.config['name']}] åˆ é™¤å¼‚å¸¸:\n{traceback.format_exc()}")
+        return 'åˆ é™¤å¤±è´¥', 400
 
 
 @app.route('/mkdir/<path:foldername>', methods=['POST'])
@@ -248,11 +248,11 @@ def mkdir(foldername):
     try:
         path = safe_path(app.config['shared_folder'], foldername)
         os.makedirs(path, exist_ok=True)
-        logger.info(f"[{app.config['name']}] ´´½¨ÎÄ¼ş¼Ğ: {foldername}")
+        logger.info(f"[{app.config['name']}] åˆ›å»ºæ–‡ä»¶å¤¹: {foldername}")
         return 'OK'
     except Exception:
-        logger.error(f"[{app.config['name']}] ´´½¨Òì³£:\n{traceback.format_exc()}")
-        return '´´½¨Ê§°Ü', 400
+        logger.error(f"[{app.config['name']}] åˆ›å»ºå¼‚å¸¸:\n{traceback.format_exc()}")
+        return 'åˆ›å»ºå¤±è´¥', 400
 
 @app.route('/list_files', methods=['GET'])
 def list_files():
@@ -273,19 +273,19 @@ def download(filename):
     try:
         path = safe_path(app.config['shared_folder'], filename)
         if not os.path.isfile(path):
-            return "ÎÄ¼ş²»´æÔÚ", 404
+            return "æ–‡ä»¶ä¸å­˜åœ¨", 404
         def generate():
             with open(path, 'rb') as f:
                 while chunk := f.read(8192):
                     yield chunk
         return Response(generate(), mimetype='application/octet-stream')
     except Exception:
-        logger.error(f"[{app.config['name']}] ÏÂÔØÒì³£:\n{traceback.format_exc()}")
-        return 'ÏÂÔØÊ§°Ü', 400
+        logger.error(f"[{app.config['name']}] ä¸‹è½½å¼‚å¸¸:\n{traceback.format_exc()}")
+        return 'ä¸‹è½½å¤±è´¥', 400
 
 @app.route('/pause_pull', methods=['POST'])
 def pause_pull():
-    logger.info(f"[{app.config['name']}] ÊÕµ½ /pause_pull ÇëÇó£¬ÔİÍ£À­È¡")
+    logger.info(f"[{app.config['name']}] æ”¶åˆ° /pause_pull è¯·æ±‚ï¼Œæš‚åœæ‹‰å–")
     pull_pause_flags[app.config['name']].set()
     return 'OK'
 @app.route('/resume_pull', methods=['POST'])
@@ -293,21 +293,21 @@ def resume_pull():
     name = app.config['name']
     pull_pause_flags[name].clear()
     app.config['_resume_requested'] = True
-    logger.info(f"[{name}] ÊÕµ½»Ö¸´À­È¡ÇëÇó")
+    logger.info(f"[{name}] æ”¶åˆ°æ¢å¤æ‹‰å–è¯·æ±‚")
     return 'OK'
-# === À­È¡Ïß³Ì ===
-pending_deletes = {}  # ¸ñÊ½: {path: retry_count}
+# === æ‹‰å–çº¿ç¨‹ ===
+pending_deletes = {}  # æ ¼å¼: {path: retry_count}
 
 def pull_loop(config: dict):
 
     peer_url = f"http://{config['peer_ip']}:{config['peer_port']}"
     pause_flag = pull_pause_flags[config['name']]
-    full_scan_interval = 60  # Ãë
+    full_scan_interval = 60  # ç§’
     last_full_scan = 0
 
     while True:
         if app.config.pop('_resume_requested', False):
-            logger.info(f"[{config['name']}] ÊÕµ½ resume_pull ºóÁ¢¼´À­È¡Ò»´Î")
+            logger.info(f"[{config['name']}] æ”¶åˆ° resume_pull åç«‹å³æ‹‰å–ä¸€æ¬¡")
         if pause_flag.is_set():
             time.sleep(1)
             continue
@@ -326,16 +326,16 @@ def pull_loop(config: dict):
                         if md5:
                             local_md5[rel] = md5
 
-                # ÆÕÍ¨ÔöÁ¿À­È¡
+                # æ™®é€šå¢é‡æ‹‰å–
                 for file in peer_files:
                     rel, md5 = file["path"], file["md5"]
                     if local_md5.get(rel) != md5:
                         download_and_replace(peer_url, rel, config['shared_folder'])
 
-                # µÍÆµÈ«Á¿É¨Ãè²¹³¥
+                # ä½é¢‘å…¨é‡æ‰«æè¡¥å¿
                 now = time.time()
                 if now - last_full_scan > full_scan_interval:
-                    # ¶Ô±È±¾µØÓëÔ¶¶ËÎÄ¼şÁĞ±í£¬ÕÒ±¾µØÓĞµ«Ô¶¶ËÎŞµÄÎÄ¼ş£¬É¾µô±¾µØ
+                    # å¯¹æ¯”æœ¬åœ°ä¸è¿œç«¯æ–‡ä»¶åˆ—è¡¨ï¼Œæ‰¾æœ¬åœ°æœ‰ä½†è¿œç«¯æ— çš„æ–‡ä»¶ï¼Œåˆ æ‰æœ¬åœ°
                     peer_file_set = set(f["path"] for f in peer_files)
                     local_file_set = set(local_md5.keys())
                     to_delete = local_file_set - peer_file_set
@@ -346,35 +346,35 @@ def pull_loop(config: dict):
                                 os.remove(local_path)
                             elif os.path.isdir(local_path):
                                 shutil.rmtree(local_path)
-                            logger.info(f"[{config['name']}] È«Á¿É¨Ãè²¹³¥É¾³ı±¾µØÎÄ¼ş: {rel_del}")
+                            logger.info(f"[{config['name']}] å…¨é‡æ‰«æè¡¥å¿åˆ é™¤æœ¬åœ°æ–‡ä»¶: {rel_del}")
                         except Exception as e:
-                            logger.warning(f"[{config['name']}] É¾³ıÊ§°Ü: {rel_del}£¬½«¼ÓÈëÖØÊÔ¶ÓÁĞ£¬Òì³£: {e}")
+                            logger.warning(f"[{config['name']}] åˆ é™¤å¤±è´¥: {rel_del}ï¼Œå°†åŠ å…¥é‡è¯•é˜Ÿåˆ—ï¼Œå¼‚å¸¸: {e}")
                             pending_deletes[local_path] = 0
 
                     last_full_scan = now
 
         except Exception:
-            logger.warning(f"[{config['name']}] µ±Ç° pause ×´Ì¬: {pause_flag.is_set()}")
-            logger.error(f"[{config['name']}] À­È¡Òì³£:\n{traceback.format_exc()}")
-        # === É¾³ıÖØÊÔÂß¼­ ===
+            logger.warning(f"[{config['name']}] å½“å‰ pause çŠ¶æ€: {pause_flag.is_set()}")
+            logger.error(f"[{config['name']}] æ‹‰å–å¼‚å¸¸:\n{traceback.format_exc()}")
+        # === åˆ é™¤é‡è¯•é€»è¾‘ ===
         to_remove = []
         for path, count in pending_deletes.items():
             try:
                 if os.path.isfile(path):
                     os.remove(path)
-                    logger.info(f"[{config['name']}] ÖØÊÔ³É¹¦É¾³ıÎÄ¼ş: {path}")
+                    logger.info(f"[{config['name']}] é‡è¯•æˆåŠŸåˆ é™¤æ–‡ä»¶: {path}")
                     to_remove.append(path)
                 elif os.path.isdir(path):
                     shutil.rmtree(path)
-                    logger.info(f"[{config['name']}] ÖØÊÔ³É¹¦É¾³ıÄ¿Â¼: {path}")
+                    logger.info(f"[{config['name']}] é‡è¯•æˆåŠŸåˆ é™¤ç›®å½•: {path}")
                     to_remove.append(path)
             except Exception as e:
                 pending_deletes[path] += 1
                 if pending_deletes[path] >= 5:
-                    logger.error(f"[{config['name']}] ¶à´ÎÉ¾³ıÊ§°Ü·ÅÆú: {path}£¬×îºóÒì³£: {e}")
+                    logger.error(f"[{config['name']}] å¤šæ¬¡åˆ é™¤å¤±è´¥æ”¾å¼ƒ: {path}ï¼Œæœ€åå¼‚å¸¸: {e}")
                     to_remove.append(path)
                 else:
-                    logger.warning(f"[{config['name']}] É¾³ıÊ§°ÜÖØÊÔ({pending_deletes[path]}/5): {path}£¬Òì³£: {e}")
+                    logger.warning(f"[{config['name']}] åˆ é™¤å¤±è´¥é‡è¯•({pending_deletes[path]}/5): {path}ï¼Œå¼‚å¸¸: {e}")
 
         for path in to_remove:
             pending_deletes.pop(path, None)
@@ -394,23 +394,23 @@ def download_and_replace(peer_url, rel, shared_folder):
                     if chunk:
                         f.write(chunk)
             os.replace(temp_path, local_path)
-            logger.info(f"À­È¡ÎÄ¼ş: {rel}")
+            logger.info(f"æ‹‰å–æ–‡ä»¶: {rel}")
     except Exception as e:
-        logger.warning(f"À­È¡ÎÄ¼şÊ§°Ü: {rel}, Òì³£: {e}")
+        logger.warning(f"æ‹‰å–æ–‡ä»¶å¤±è´¥: {rel}, å¼‚å¸¸: {e}")
 def should_pause_pull():
     return pull_pause_flags[config['name']].is_set()
 
-# === Æô¶¯ ===
+# === å¯åŠ¨ ===
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        logger.error("ÓÃ·¨: python sync_node_full.py config.json")
+        logger.error("ç”¨æ³•: python sync_node_full.py config.json")
         sys.exit(1)
     with open(sys.argv[1], 'r', encoding='utf-8') as f:
         config = json.load(f)
     for k in ['name', 'shared_folder', 'my_port', 'peer_ip', 'peer_port']:
         if k not in config:
-            logger.error(f"ÅäÖÃÈ±Ê§: {k}")
+            logger.error(f"é…ç½®ç¼ºå¤±: {k}")
             sys.exit(1)
     shared_folder = os.path.abspath(config['shared_folder'])
     os.makedirs(shared_folder, exist_ok=True)
@@ -425,12 +425,12 @@ if __name__ == '__main__':
     observer.schedule(SyncHandler(config), path=shared_folder, recursive=True)
     observer.start()
     threading.Thread(target=pull_loop, args=(config,), daemon=True).start()
-    logger.info(f"[{config['name']}] Æô¶¯³É¹¦£¬¼àÌı¶Ë¿Ú: {config['my_port']}£¬Ä¿Â¼: {shared_folder}")
+    logger.info(f"[{config['name']}] å¯åŠ¨æˆåŠŸï¼Œç›‘å¬ç«¯å£: {config['my_port']}ï¼Œç›®å½•: {shared_folder}")
 
     try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        logger.info("ÍË³öÖĞ...")
+        logger.info("é€€å‡ºä¸­...")
         observer.stop()
         observer.join()
